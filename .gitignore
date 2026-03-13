@@ -1,3 +1,6 @@
 .vscode
 obj_dir
 *.f
+*.fst
+*.vcd
+makefile
