@@ -1,4 +1,4 @@
-module register_file #(
+module rv32_register_file #(
     parameter   XLEN=32,
     parameter   ADDR_WIDTH=5,
     localparam  REG_DEPTH=2**ADDR_WIDTH
