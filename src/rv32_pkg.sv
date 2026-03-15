@@ -25,9 +25,26 @@ typedef enum logic[2:0] {
     LSU_SH
 } lsu_op_e;
 
-typedef enum logic {
+typedef enum logic[1:0] {
     WB_ALU,
-    WB_LSU
+    WB_LSU,
+    WB_IMM,
+    WB_PC 
 } wb_sel_e;
+
+typedef enum logic[2:0] {
+    IMM_R,
+    IMM_I,
+    IMM_S,
+    IMM_B,
+    IMM_U,
+    IMM_J,
+    IMM_UNDEF[2]
+} imm_sel_e;
+
+typedef enum logic {
+    ALU_B_REG,
+    ALU_B_IMM
+} alu_b_sel_e;
 
 endpackage

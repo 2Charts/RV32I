@@ -39,6 +39,20 @@ module rv32_core (
 
 
 ////////////////////////////////////
+//          Sign Extend           //
+////////////////////////////////////
+
+    imm_sel_e   imm_sel;
+    logic[31:0] imm_data;
+
+    rv32_imm_ext imm_ext (
+        .imm_i(instr_data_i[31:7]),
+        .imm_o(imm_data),
+        .imm_sel_i(imm_sel)
+    );
+
+
+////////////////////////////////////
 //          Write Back            //
 ////////////////////////////////////
 
@@ -46,8 +60,14 @@ module rv32_core (
     wb_sel_e     wb_sel;
     logic        wb_en;
 
-    // will be changed for immediates
-    assign wb_data = wb_sel == WB_ALU ? alu_result : lsu_data_out;
+    always_comb begin
+        unique case (wb_sel)
+            WB_ALU: wb_data = alu_result;
+            WB_LSU: wb_data = lsu_data_out;
+            WB_IMM: wb_data = imm_data;
+            WB_PC : wb_data = pc_plus4;
+        endcase
+    end
 
 
 ////////////////////////////////////
@@ -78,11 +98,15 @@ module rv32_core (
 ////////////////////////////////////
 
     logic [31:0] alu_result;
+    logic [31:0] alu_b;
+    alu_b_sel_e  alu_b_sel;
     alu_op_e     alu_op;
+
+    assign alu_b = alu_b_sel == ALU_B_REG ? regfile_rdata_b : imm_data;
 
     rv32_alu alu (
         .opr_a_i(regfile_rdata_a),
-        .opr_b_i(regfile_rdata_b), // will be changed for immediates
+        .opr_b_i(alu_b),
         .result_o(alu_result),
         .alu_op_i(alu_op)
     );
