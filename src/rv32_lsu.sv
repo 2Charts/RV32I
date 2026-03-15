@@ -12,62 +12,45 @@ module rv32_lsu
     output logic        w_en,
 
     input  logic        lsu_en,
-    input  lsu_mode_t   lsu_mode,
-    input  lsu_width_t  lsu_width,
-    input  logic        lsu_sign_ext
-    //output logic        lsu_misaligned
+    input  lsu_op_t     lsu_op,
 );
+
+logic sign_ext;
+assign sign_ext = lsu_mode == LSU_LB or lsu_mode == LSU_LH ? 1 : 0;
 
 assign rw_addr = {addr_in[31:2], 2'b00};
 
-// logic misaligned_load;
-// logic misaligned_store;
-
-// assign lsu_misaligned = misaligned_load | misaligned_store;
-
 always_comb begin
     data_out = 0;
-    //misaligned_load = 0;
-
-    if(lsu_en && lsu_mode == LSU_LOAD) begin
-        unique case (lsu_width)
-            LSU_BYTE: begin
-                unique case (addr_in[1:0])
-                    2'b00: data_out = {{24{lsu_sign_ext & r_data[7]}},  r_data[7:0]};
-                    2'b01: data_out = {{24{lsu_sign_ext & r_data[15]}}, r_data[15:8]};
-                    2'b10: data_out = {{24{lsu_sign_ext & r_data[23]}}, r_data[23:16]};
-                    2'b11: data_out = {{24{lsu_sign_ext & r_data[31]}}, r_data[31:24]};
-                endcase
-            end
-            LSU_HALFWORD: begin
-                unique case (addr_in[1:0])
-                    2'b00: data_out = {{16{lsu_sign_ext & r_data[15]}}, r_data[15:0]};
-                    2'b01: data_out = {{16{lsu_sign_ext & r_data[23]}}, r_data[23:8]};
-                    2'b10: data_out = {{16{lsu_sign_ext & r_data[31]}}, r_data[31:16]};
-                    2'b11: //misaligned_load = 1;
-                endcase
-            end
-            LSU_WORD, LSU_WORD_2: begin
-                if (addr_in[1:0] == 0) begin
-                    data_out = r_data;
-                end 
-                // else begin
-                //     misaligned_load = 1;
-                // end
-            end
-        endcase
-    end
-end
-
-always_comb begin
     w_en = 0;
     w_data = 0;
     w_be = 0;
-    //misaligned_store = 0;
 
-    if(lsu_en && lsu_mode == LSU_STORE) begin
-        unique case (lsu_width)
-            LSU_BYTE: begin
+    if (lsu_en) begin
+        unique case (lsu_op)
+            LSU_LB, LSU_LBU: begin
+                unique case (addr_in[1:0])
+                    2'b00: data_out = {{24{sign_ext & r_data[7]}},  r_data[7:0]};
+                    2'b01: data_out = {{24{sign_ext & r_data[15]}}, r_data[15:8]};
+                    2'b10: data_out = {{24{sign_ext & r_data[23]}}, r_data[23:16]};
+                    2'b11: data_out = {{24{sign_ext & r_data[31]}}, r_data[31:24]};
+                endcase
+            end
+            LSU_LH, LSU_LHU: begin
+                unique case (addr_in[1:0])
+                    2'b00: data_out = {{16{sign_ext & r_data[15]}}, r_data[15:0]};
+                    2'b01: data_out = {{16{sign_ext & r_data[23]}}, r_data[23:8]};
+                    2'b10: data_out = {{16{sign_ext & r_data[31]}}, r_data[31:16]};
+                    2'b11: ; // misaligned load
+                endcase
+            end
+            LSU_LW: begin
+                if (addr_in[1:0] == 0) begin
+                    data_out = r_data;
+                end 
+                // else, misaligned load
+            end
+            LSU_SB: begin
                 w_en = 1;
                 unique case (addr_in[1:0])
                     2'b00: begin
@@ -88,7 +71,7 @@ always_comb begin
                     end
                 endcase
             end
-            LSU_HALFWORD: begin
+            LSU_SH: begin
                 unique case (addr_in[1:0])
                     2'b00: begin
                         w_en = 1;
@@ -108,13 +91,11 @@ always_comb begin
                     2'b11: // misaligned_store = 1;
                 endcase
             end
-            LSU_WORD, LSU_WORD_2: begin
+            LSU_SW:  begin
                 if (addr_in[1:0] == 0) begin
                     w_data = data_in;
                 end 
-                // else begin
-                //     misaligned_store = 1;
-                // end
+                // else, misaligned store
             end
         endcase
     end
