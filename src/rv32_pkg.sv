@@ -12,7 +12,7 @@ typedef enum logic[3:0] {
     ALU_OR,
     ALU_AND,
     ALU_UNDEF[6]
-} alu_op_t;
+} alu_op_e;
 
 typedef enum logic[2:0] {
     LSU_LB,
@@ -23,11 +23,11 @@ typedef enum logic[2:0] {
     LSU_SB,
     LSU_SW,
     LSU_SH
-} lsu_op_t;
+} lsu_op_e;
 
 typedef enum logic {
-    REG_IN_ALU,
-    REG_IN_LSU
-} reg_in_sel_t;
+    WB_ALU,
+    WB_LSU
+} wb_sel_e;
 
 endpackage
