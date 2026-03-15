@@ -6,10 +6,10 @@ module rv32_alu
 
     output logic [31:0] result,
 
-    input alu_op_e      alu_op
+    input alu_op_t      alu_op
 );
     always_comb begin
-        unique case (alu_mode) 
+        unique case (alu_op) 
             ALU_ADD: result = opr_a + opr_b;
             ALU_SUB: result = opr_a - opr_b;
             ALU_SLT: result = signed'(opr_a) < signed'(opr_b) ? 1 : 0;
