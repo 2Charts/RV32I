@@ -13,16 +13,13 @@ module rv32_core (
 );
     import rv32_pkg::*;
 
-    // for now, errors will cause a halt
-    logic trap;
-    assign trap = lsu_misaligned; // todo: add invalid instruction, move to CU
-
 ////////////////////////////////////
 //          Sign Extend           //
 ////////////////////////////////////
 
-    imm_sel_e   imm_sel;
     logic[31:0] imm_data;
+
+    imm_sel_e   imm_sel;
 
     rv32_imm_ext imm_ext (
         .imm_i(instr_data_i[31:7]),
@@ -42,21 +39,28 @@ module rv32_core (
 
     pc_sel_e     pc_sel;
 
+    logic        pc_misaligned;
+
     assign pc_plus_4 = pc + 4;
     assign pc_plus_imm = pc + imm_data;
 
     always_comb begin
         unique case (pc_sel)
+            // normal
             PC_PLUS_4  : pc_next = pc + 4;
+            // Branch, JAL
             PC_PLUS_IMM: pc_next = pc_plus_imm;
-            PC_FROM_ALU: pc_next = alu_result;
+            // JALR
+            PC_FROM_ALU: pc_next = alu_result & ~32'd1; // align to two bytes
             default    : pc_next = pc + 4; // defaults to +4
         endcase
     end
 
+    assign pc_misaligned = pc_next[1] | pc_next[0];
+
     always_ff @(posedge clk) begin
         if(!rst_n) begin
-            pc = 0;
+            pc <= 0;
         end else if(!trap) begin
             pc <= pc_next;
         end else begin
@@ -158,6 +162,34 @@ module rv32_core (
         .lsu_en_i(lsu_en),
         .lsu_op_i(lsu_op),
         .lsu_misaligned_o(lsu_misaligned)
+    );
+
+
+////////////////////////////////////
+//         Control Unit           //
+////////////////////////////////////
+
+    logic misaligned_addr = lsu_misaligned | pc_misaligned;
+    logic trap;
+
+    rv32_cu cu(
+        .opcode_i(instr_data_i[6:0]),
+        .funct3_i(instr_data_i[14:12]),
+        .funct7_i(instr_data_i[31:25]),
+
+        .misaligned_addr_i(misaligned_addr),
+        .alu_zero_i(alu_zero),
+
+        .imm_sel_o(imm_sel),
+        .pc_sel_o(pc_sel),
+        .wb_sel_o(wb_sel),
+        .wb_en_o(wb_en),
+        .alu_b_sel_o(alu_b_sel),
+        .alu_op_o(alu_op),
+        .lsu_en_o(lsu_en),
+        .lsu_op_o(lsu_op),
+
+        .trap_o(trap)
     );
 
 endmodule
