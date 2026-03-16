@@ -47,4 +47,11 @@ typedef enum logic {
     ALU_B_IMM
 } alu_b_sel_e;
 
+typedef enum logic[1:0] {
+    PC_PLUS_4,
+    PC_PLUS_IMM,
+    PC_FROM_ALU,
+    PC_UNDEF
+} pc_sel_e;
+
 endpackage

@@ -15,28 +15,7 @@ module rv32_core (
 
     // for now, errors will cause a halt
     logic trap;
-
-
-////////////////////////////////////
-//        Program Counter         //
-////////////////////////////////////
-
-    logic [31:0] pc;
-    logic [31:0] pc_plus4;
-
-    always_ff @(posedge clk) begin
-        if(!rst_n) begin
-            pc = 0;
-        end else if(!trap) begin
-            pc <= pc_plus4;
-        end else begin
-            pc <= pc;
-        end
-    end
-
-    assign instr_addr_o = pc;
-    assign pc_plus4 = pc + 4;
-
+    assign trap = lsu_misaligned; // todo: add invalid instruction, move to CU
 
 ////////////////////////////////////
 //          Sign Extend           //
@@ -53,10 +32,47 @@ module rv32_core (
 
 
 ////////////////////////////////////
+//        Program Counter         //
+////////////////////////////////////
+
+    logic [31:0] pc;
+    logic [31:0] pc_next;
+    logic [31:0] pc_plus_4;
+    logic [31:0] pc_plus_imm;
+
+    pc_sel_e     pc_sel;
+
+    assign pc_plus_4 = pc + 4;
+    assign pc_plus_imm = pc + imm_data;
+
+    always_comb begin
+        unique case (pc_sel)
+            PC_PLUS_4  : pc_next = pc + 4;
+            PC_PLUS_IMM: pc_next = pc_plus_imm;
+            PC_FROM_ALU: pc_next = alu_result;
+            default    : pc_next = pc + 4; // defaults to +4
+        endcase
+    end
+
+    always_ff @(posedge clk) begin
+        if(!rst_n) begin
+            pc = 0;
+        end else if(!trap) begin
+            pc <= pc_next;
+        end else begin
+            pc <= pc;
+        end
+    end
+
+    assign instr_addr_o = pc;
+
+
+////////////////////////////////////
 //          Write Back            //
 ////////////////////////////////////
 
     logic [31:0] wb_data;
+
     wb_sel_e     wb_sel;
     logic        wb_en;
 
@@ -65,7 +81,7 @@ module rv32_core (
             WB_ALU: wb_data = alu_result;
             WB_LSU: wb_data = lsu_data_out;
             WB_IMM: wb_data = imm_data;
-            WB_PC : wb_data = pc_plus4;
+            WB_PC : wb_data = pc_plus_4;
         endcase
     end
 
@@ -99,8 +115,11 @@ module rv32_core (
 
     logic [31:0] alu_result;
     logic [31:0] alu_b;
+
     alu_b_sel_e  alu_b_sel;
     alu_op_e     alu_op;
+
+    logic        alu_zero;
 
     assign alu_b = alu_b_sel == ALU_B_REG ? regfile_rdata_b : imm_data;
 
@@ -111,14 +130,18 @@ module rv32_core (
         .alu_op_i(alu_op)
     );
 
+    assign alu_zero = ~&alu_result;
+
 
 ////////////////////////////////////
 //        Load Store Unit         //
 ////////////////////////////////////
 
     logic [31:0] lsu_data_out;
+
     logic lsu_en;
     lsu_op_e lsu_op;
+
     logic lsu_misaligned;
 
     rv32_lsu lsu(
