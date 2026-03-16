@@ -12,6 +12,7 @@ module rv32_cu
     output pc_sel_e     pc_sel_o,
     output wb_sel_e     wb_sel_o,
     output logic        wb_en_o,
+    output alu_a_sel_e  alu_a_sel_o,
     output alu_b_sel_e  alu_b_sel_o,
     output alu_op_e     alu_op_o,
     output logic        lsu_en_o,

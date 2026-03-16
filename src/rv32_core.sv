@@ -118,18 +118,21 @@ module rv32_core (
 ////////////////////////////////////
 
     logic [31:0] alu_result;
-    logic [31:0] alu_b;
+    logic [31:0] alu_opr_a;
+    logic [31:0] alu_opr_b;
 
+    alu_a_sel_e  alu_a_sel;
     alu_b_sel_e  alu_b_sel;
     alu_op_e     alu_op;
 
     logic        alu_zero;
 
-    assign alu_b = alu_b_sel == ALU_B_REG ? regfile_rdata_b : imm_data;
+    assign alu_opr_a = alu_a_sel == ALU_A_REG ? regfile_rdata_a : pc;
+    assign alu_opr_b = alu_b_sel == ALU_B_REG ? regfile_rdata_b : imm_data;
 
     rv32_alu alu (
-        .opr_a_i(regfile_rdata_a),
-        .opr_b_i(alu_b),
+        .opr_a_i(alu_opr_a),
+        .opr_b_i(alu_opr_b),
         .result_o(alu_result),
         .alu_op_i(alu_op)
     );
@@ -184,6 +187,7 @@ module rv32_core (
         .pc_sel_o(pc_sel),
         .wb_sel_o(wb_sel),
         .wb_en_o(wb_en),
+        .alu_a_sel_o(alu_a_sel),
         .alu_b_sel_o(alu_b_sel),
         .alu_op_o(alu_op),
         .lsu_en_o(lsu_en),
