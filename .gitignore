@@ -1,6 +1,8 @@
 .vscode
 obj_dir
+sim_build
 *.f
 *.fst
 *.vcd
-makefile
+__pycache__/
+results.xml

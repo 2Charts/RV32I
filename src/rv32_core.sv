@@ -61,7 +61,7 @@ module rv32_core (
     always_ff @(posedge clk) begin
         if(!rst_n) begin
             pc <= 0;
-        end else if(!trap) begin
+        end else if (!trap) begin
             pc <= pc_next;
         end else begin
             pc <= pc;

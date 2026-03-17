@@ -20,5 +20,16 @@ module rv32_cu
 
     output logic        trap_o
 );
-    
+    always_comb begin
+        imm_sel_o   = IMM_R;
+        pc_sel_o    = PC_PLUS_4;
+        wb_sel_o    = WB_ALU;
+        wb_en_o     = 0;
+        alu_a_sel_o = ALU_A_REG;
+        alu_b_sel_o = ALU_B_REG;
+        alu_op_o    = ALU_ADD;
+        lsu_en_o    = 0;
+        lsu_op_o    = LSU_LB;
+        trap_o      = 0;
+    end
 endmodule
