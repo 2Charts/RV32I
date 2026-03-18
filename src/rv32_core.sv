@@ -180,6 +180,8 @@ module rv32_core (
         .funct3_i(instr_data_i[14:12]),
         .funct7_i(instr_data_i[31:25]),
 
+        .rst_n_i(rst_n),
+
         .misaligned_addr_i(misaligned_addr),
         .alu_zero_i(alu_zero),
 
