@@ -18,6 +18,7 @@ async def test(dut):
     await FallingEdge(dut.clk)
 
     dut.rst_n.value = 1
+    dut.instr_data_i.value = 0x0000_0013 # ADDI x0, x0, 0     (NOP)
     for _ in range(50):
         await RisingEdge(dut.clk)
         time_ns = get_sim_time(unit="ns")

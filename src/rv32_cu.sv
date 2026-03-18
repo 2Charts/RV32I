@@ -1,3 +1,4 @@
+/* verilator lint_off UNOPTFLAT */
 module rv32_cu
     import rv32_pkg::*;
 (
@@ -5,7 +6,7 @@ module rv32_cu
     input  logic[2:0]   funct3_i,
     input  logic[6:0]   funct7_i,
 
-    input  logic rst_n_i;
+    input  logic rst_n_i,
 
     input  logic        misaligned_addr_i,
     input  logic        alu_zero_i,
@@ -24,7 +25,7 @@ module rv32_cu
 );
     logic invalid_instruction;
 
-    trap_o = rst_n_i == 0 ? 0 : (invalid_instruction | misaligned_addr_i);
+    assign trap_o = rst_n_i == 0 ? 0 : (invalid_instruction | misaligned_addr_i);
 
     always_comb begin
         imm_sel_o   = IMM_R;
@@ -36,24 +37,23 @@ module rv32_cu
         alu_op_o    = ALU_ADD;
         lsu_en_o    = 0;
         lsu_op_o    = LSU_LB;
-        trap_o      = 0;
         invalid_instruction = 0;
 
 
         unique case (opcode_i)
             
             7'b0110111: begin // U-type LUI
-                imm_sel = IMM_I;
-                wb_sel  = WB_IMM;
-                wb_en   = 1;
+                imm_sel_o = IMM_I;
+                wb_sel_o  = WB_IMM;
+                wb_en_o   = 1;
             end
 
             7'b0010111: begin // U-type AUIPC
-                imm_sel = IMM_I;
-                alu_a_sel = ALU_A_PC;
-                alu_b_sel = ALU_B_IMM;
-                alu_op = ALU_ADD;
-                pc_sel = PC_FROM_ALU;
+                imm_sel_o = IMM_I;
+                alu_a_sel_o = ALU_A_PC;
+                alu_b_sel_o = ALU_B_IMM;
+                alu_op_o = ALU_ADD;
+                pc_sel_o = PC_FROM_ALU;
             end
 
             7'b1101111: begin // J-type JAL
@@ -77,12 +77,12 @@ module rv32_cu
 
             7'b1100011: begin // B-type branch
                 imm_sel_o = IMM_B;
-                alu_a_sel = ALU_A_REG;
-                alu_b_sel = ALU_B_REG;
+                alu_a_sel_o = ALU_A_REG;
+                alu_b_sel_o = ALU_B_REG;
                 unique case (funct3_i)
                     3'b000, 3'b001: alu_op_o = ALU_SUB; // BEQ, BNE
-                    3'b100, 3'b101: alu_op_o = ALU_SLT: // BLT, BGE
-                    3'b110, 3'b111: alu_op_o = ALU_SLTU // BLTU, BGEU
+                    3'b100, 3'b101: alu_op_o = ALU_SLT; // BLT, BGE
+                    3'b110, 3'b111: alu_op_o = ALU_SLTU; // BLTU, BGEU
                     default: invalid_instruction = 1;
                 endcase
 
@@ -134,11 +134,12 @@ module rv32_cu
                 endcase
 
                 if(!invalid_instruction) begin
-                    lsu_en_o;
+                    lsu_en_o = 1;
                 end
             end
 
             7'b0010011: begin // I-type ALU
+                imm_sel_o = IMM_I;
                 unique case (funct3_i)
                     3'b000: alu_op_o = funct7_i[5] == 1 ? ALU_SUB : ALU_ADD;
                     3'b001: alu_op_o = ALU_SLL;

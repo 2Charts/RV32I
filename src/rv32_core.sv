@@ -63,8 +63,6 @@ module rv32_core (
             pc <= 0;
         end else if (!trap) begin
             pc <= pc_next;
-        end else begin
-            pc <= pc;
         end
     end
 

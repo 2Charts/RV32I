@@ -17,6 +17,9 @@ COCOTB_TOPLEVEL = rv32_core
 
 export PYTHONPATH := $(PWD)/tb
 
+WAVES = 1
+EXTRA_ARGS += --trace --trace-fst --trace-structs
+
 COCOTB_TEST_MODULES = tb
 
 include $(shell cocotb-config --makefiles)/Makefile.sim
